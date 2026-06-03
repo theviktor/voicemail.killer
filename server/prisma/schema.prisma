@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// The callee ("Mr. X"). One row per person whose calls the agent answers.
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  companyName  String?
+  /// The Twilio number assigned exclusively to this user; callers reach it via
+  /// conditional call forwarding. Used to resolve tenant on inbound calls.
+  twilioNumber String   @unique
+  /// Voice Agent API voice id (exact string, e.g. "james", "ivy").
+  voice        String   @default("james")
+
+  /// Free-text availability shown to the agent (e.g. "in meetings until 3pm").
+  availability String   @default("not available to take the call right now")
+  /// Extra persona/policy instructions appended to every system prompt.
+  systemPromptAddon String?
+
+  /// Where message alerts go.
+  alertEmail   String?
+  alertPhone   String?
+
+  /// Telemarketer handling.
+  telemarketerTopics String[] @default([])
+  telemarketerPolicy String   @default("Politely decline, ask them to remove this number from their list, and do not commit to anything.")
+
+  contacts Contact[]
+  groups   Group[]
+  calls    CallRecord[]
+  outboundMessages OutboundMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Optional grouping of contacts with shared customization (e.g. "Family", "Work").
+model Group {
+  id               String  @id @default(cuid())
+  userId           String
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  /// Appended to the system prompt for callers in this group.
+  systemPromptAddon String?
+  /// Custom greeting override for this group.
+  greeting         String?
+  /// Topics/questions the agent is allowed to answer for this group.
+  allowedTopics    String[] @default([])
+
+  contacts Contact[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+}
+
+/// A known caller on the user's contact list.
+model Contact {
+  id      String  @id @default(cuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name    String
+  /// E.164, e.g. +14155551234. Matched against Twilio's `From`.
+  phone   String
+  groupId String?
+  group   Group?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  /// Per-contact override appended to the system prompt.
+  notes   String?
+
+  calls CallRecord[]
+  outboundMessages OutboundMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, phone])
+}
+
+enum OutboundMessageStatus {
+  PENDING
+  DELIVERED
+  CANCELED
+}
+
+/// A message the user leaves with the assistant FOR a specific contact, to be
+/// delivered by the agent when that contact next calls in.
+model OutboundMessage {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  body      String
+  status    OutboundMessageStatus @default(PENDING)
+  deliveredAt DateTime?
+  /// Set when delivered — the call in which the agent relayed it.
+  deliveredCallId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contactId, status])
+}
+
+enum CallClassification {
+  KNOWN
+  UNKNOWN
+  TELEMARKETER
+}
+
+enum CallStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum Urgency {
+  LOW
+  NORMAL
+  HIGH
+}
+
+/// One row per inbound call. Holds transcript, recording, and any captured message.
+model CallRecord {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  callSid       String  @unique
+  streamSid     String?
+  callerNumber  String
+  callerName    String?
+  classification CallClassification @default(UNKNOWN)
+  status        CallStatus @default(IN_PROGRESS)
+
+  /// Array of { role: "caller"|"agent", text, ts } turns.
+  transcript Json?
+
+  recordingUrl         String?
+  recordingDurationSec Int?
+
+  // Captured message (via the take_message tool).
+  messageSummary String?
+  message        String?
+  callbackNumber String?
+  urgency        Urgency?
+  alertedAt      DateTime?
+
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+}

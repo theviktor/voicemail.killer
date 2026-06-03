@@ -1,0 +1,71 @@
+# Local + Easypanel-friendly compose.
+# On Easypanel you can either import this compose or create three services
+# (db / server / web) from the same images. Env comes from .env.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Host port 5455 (5432-5434 are used by other local projects). Containers
+      # still talk to Postgres on 5432 over the compose network.
+      - "5455:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_SMS_FROM: ${TWILIO_SMS_FROM}
+      PUBLIC_SERVER_URL: ${PUBLIC_SERVER_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      ALERT_FROM_EMAIL: ${ALERT_FROM_EMAIL}
+      ALERT_FROM_NAME: ${ALERT_FROM_NAME}
+      # Built from parts with the in-network "db" host — overrides the localhost
+      # DATABASE_URL in .env (which is for local-node dev).
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      DEMO_TWILIO_NUMBER: ${DEMO_TWILIO_NUMBER}
+      DEMO_USER_NAME: ${DEMO_USER_NAME}
+      DEMO_COMPANY: ${DEMO_COMPANY}
+      DEMO_ALERT_EMAIL: ${DEMO_ALERT_EMAIL}
+      DEMO_ALERT_PHONE: ${DEMO_ALERT_PHONE}
+      SERVER_PORT: ${SERVER_PORT}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+
+  web:
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    ports:
+      - "${WEB_PORT}:3000"
+
+volumes:
+  pgdata:

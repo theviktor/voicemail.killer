@@ -1,0 +1,54 @@
+{
+  "note": "Conditional call-forwarding codes route only UNANSWERED/BUSY/UNREACHABLE calls to your Twilio number, so your phone still rings first. Codes vary by carrier, plan, and device — ALWAYS verify with your carrier before relying on these. Replace <TWILIO_NUMBER> with your assigned number's 10 digits (no +1) unless noted.",
+  "carriers": [
+    {
+      "name": "Verizon",
+      "type": "CDMA/VoLTE",
+      "enable": "*71<TWILIO_NUMBER>  (then press Call; forwards on no-answer/busy)",
+      "disable": "*73  (then press Call)",
+      "notes": "*71 = conditional (no answer / busy). *72 is UNCONDITIONAL (forwards everything) — do not use that for this."
+    },
+    {
+      "name": "AT&T",
+      "type": "GSM",
+      "enable": "No answer: *61*<TWILIO_NUMBER>#   Busy: *67*<TWILIO_NUMBER>#   Unreachable: *62*<TWILIO_NUMBER>#   (or set all three: **004*<TWILIO_NUMBER>#)",
+      "disable": "No answer: #61#   Busy: #67#   Unreachable: #62#   (or all: ##004#)",
+      "notes": "GSM supplementary-service codes; press Call after dialing."
+    },
+    {
+      "name": "T-Mobile",
+      "type": "GSM",
+      "enable": "No answer: **61*<TWILIO_NUMBER>#   Busy: **67*<TWILIO_NUMBER>#   Unreachable: **62*<TWILIO_NUMBER>#   (all: **004*<TWILIO_NUMBER>#)",
+      "disable": "No answer: ##61#   Busy: ##67#   Unreachable: ##62#   (all: ##004#)",
+      "notes": "Use full E.164 (+1<number>) on some T-Mobile/VoLTE configurations."
+    },
+    {
+      "name": "Mint Mobile (T-Mobile MVNO)",
+      "type": "GSM",
+      "enable": "**61*<TWILIO_NUMBER>#  / **67*<TWILIO_NUMBER>#  / **62*<TWILIO_NUMBER>#",
+      "disable": "##61#  / ##67#  / ##62#",
+      "notes": "Follows T-Mobile GSM codes."
+    },
+    {
+      "name": "Cricket (AT&T MVNO)",
+      "type": "GSM",
+      "enable": "*61*<TWILIO_NUMBER>#  / *67*<TWILIO_NUMBER>#  / *62*<TWILIO_NUMBER>#",
+      "disable": "#61#  / #67#  / #62#",
+      "notes": "Follows AT&T GSM codes."
+    },
+    {
+      "name": "Google Fi",
+      "type": "App-based",
+      "enable": "Set conditional forwarding in the Google Fi app or fi.google.com (Account → Settings), not via star codes.",
+      "disable": "Toggle off in the Google Fi app.",
+      "notes": "Star codes are unreliable on Fi; use the app."
+    },
+    {
+      "name": "US Cellular",
+      "type": "CDMA/VoLTE",
+      "enable": "*71<TWILIO_NUMBER>  (conditional; press Call)",
+      "disable": "*73",
+      "notes": "Similar to Verizon-style codes; verify on your plan."
+    }
+  ]
+}

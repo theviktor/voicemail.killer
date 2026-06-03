@@ -1,0 +1,61 @@
+:root {
+  --bg: #0b0e14;
+  --panel: #151a23;
+  --panel2: #1c232f;
+  --text: #e6e9ef;
+  --muted: #9aa4b2;
+  --accent: #5b8cff;
+  --green: #3ecf8e;
+  --amber: #f5a623;
+  --red: #ff6b6b;
+  --border: #232b38;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.nav {
+  display: flex; gap: 18px; align-items: center;
+  padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--border);
+}
+.nav .brand { font-weight: 700; margin-right: 12px; }
+.container { max-width: 980px; margin: 0 auto; padding: 28px 24px; }
+h1 { font-size: 22px; margin: 0 0 16px; }
+h2 { font-size: 17px; margin: 24px 0 10px; }
+.card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px; margin-bottom: 14px;
+}
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.muted { color: var(--muted); }
+.tag {
+  display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--panel2);
+}
+.tag.KNOWN { color: var(--green); border-color: #1f6b4d; }
+.tag.UNKNOWN { color: var(--muted); }
+.tag.TELEMARKETER { color: var(--amber); border-color: #6b561f; }
+.tag.HIGH { color: var(--red); }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; font-size: 13px; }
+input, textarea, select {
+  width: 100%; background: var(--panel2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit;
+}
+label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+button {
+  background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+  padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer;
+}
+button.secondary { background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
+button.danger { background: transparent; border: 1px solid #6b2b2b; color: var(--red); }
+.bubble { padding: 8px 12px; border-radius: 10px; margin: 6px 0; max-width: 80%; }
+.bubble.caller { background: var(--panel2); }
+.bubble.agent { background: #1d2a44; margin-left: auto; }
+pre.code { background: #0a0d12; border: 1px solid var(--border); border-radius: 8px; padding: 12px; overflow:auto; white-space: pre-wrap; }

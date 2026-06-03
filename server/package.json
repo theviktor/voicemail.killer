@@ -1,0 +1,31 @@
+{
+  "name": "ai-receptionist-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
+    "seed": "node prisma/seed.js",
+    "tunnel": "ngrok http 8080",
+    "e2e:setup": "node scripts/e2e.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nodemailer": "^6.9.16",
+    "twilio": "^5.4.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.2.1"
+  }
+}

@@ -19,12 +19,8 @@ const ALERT_PHONE = process.env.DEMO_ALERT_PHONE || "+15555550199";
 async function main() {
   const user = await prisma.user.upsert({
     where: { twilioNumber: TWILIO_NUMBER },
-    update: {
-      name: NAME,
-      companyName: COMPANY,
-      alertEmail: ALERT_EMAIL,
-      alertPhone: ALERT_PHONE,
-    },
+    // Create-only: don't clobber edits made later in the Settings UI.
+    update: {},
     create: {
       name: NAME,
       companyName: COMPANY,

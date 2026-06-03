@@ -20,64 +20,62 @@ export default function SettingsPage() {
 
   async function save() {
     try {
-      const body = {
-        ...u,
-        telemarketerTopics: (u.telemarketerTopics || []).filter(Boolean),
-      };
-      const updated = await api.updateUser(u.id, body);
-      setU(updated);
+      const body = { ...u, telemarketerTopics: (u.telemarketerTopics || []).filter(Boolean) };
+      setU(await api.updateUser(u.id, body));
       setSaved(true);
     } catch (e) {
       setErr(e.message);
     }
   }
 
-  if (err) return <main className="container"><div className="card">Error: {err}</div></main>;
-  if (!u) return <main className="container"><p className="muted">Loading…</p></main>;
+  if (err) return <main className="container"><div className="banner">⚠ {err}</div></main>;
+  if (!u) return <main className="container"><div className="spin">Loading…</div></main>;
 
   return (
     <main className="container">
-      <h1>Settings</h1>
+      <div className="page-head">
+        <h1>Settings</h1>
+        <p className="sub">How your assistant introduces you and handles callers.</p>
+      </div>
+
       <div className="card">
+        <h2 style={{ marginTop: 0 }}>Profile</h2>
         <div className="row">
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="field">
             <label>Your name</label>
             <input value={u.name || ""} onChange={(e) => set("name", e.target.value)} />
           </div>
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="field">
             <label>Company (optional)</label>
             <input value={u.companyName || ""} onChange={(e) => set("companyName", e.target.value)} />
           </div>
         </div>
-
         <div className="row">
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="field">
             <label>Assigned Twilio number (E.164)</label>
             <input value={u.twilioNumber || ""} onChange={(e) => set("twilioNumber", e.target.value)} />
           </div>
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="field">
             <label>Agent voice</label>
             <select value={u.voice || "james"} onChange={(e) => set("voice", e.target.value)}>
               {VOICES.map((v) => <option key={v} value={v}>{v}</option>)}
             </select>
           </div>
         </div>
-
         <label>Availability (what the agent tells callers)</label>
         <input value={u.availability || ""} onChange={(e) => set("availability", e.target.value)} />
-
-        <label>Extra agent instructions (applies to all callers)</label>
+        <label>Extra agent instructions (all callers)</label>
         <textarea rows={3} value={u.systemPromptAddon || ""} onChange={(e) => set("systemPromptAddon", e.target.value)} />
       </div>
 
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Alerts</h2>
         <div className="row">
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="field">
             <label>Alert email</label>
             <input value={u.alertEmail || ""} onChange={(e) => set("alertEmail", e.target.value)} />
           </div>
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="field">
             <label>Alert SMS number (E.164)</label>
             <input value={u.alertPhone || ""} onChange={(e) => set("alertPhone", e.target.value)} />
           </div>
@@ -96,8 +94,8 @@ export default function SettingsPage() {
       </div>
 
       <div className="row" style={{ alignItems: "center" }}>
-        <button onClick={save}>Save</button>
-        {saved && <span style={{ color: "var(--green)" }}>Saved ✓</span>}
+        <button onClick={save}>Save changes</button>
+        {saved && <span className="saved">✓ Saved</span>}
       </div>
     </main>
   );

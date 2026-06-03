@@ -20,23 +20,28 @@ export default function CarriersPage() {
 
   return (
     <main className="container">
-      <h1>Call-Forwarding Setup</h1>
-      <div className="card">
-        <p>
-          Set <b>conditional</b> call forwarding on your cell so unanswered calls ring through to your
-          AI receptionist at <b>{user?.twilioNumber || "your Twilio number"}</b>.
+      <div className="page-head">
+        <h1>Forwarding Setup</h1>
+        <p className="sub">
+          Set <b>conditional</b> forwarding on your cell so unanswered calls ring through to your assistant
+          at <b>{user?.twilioNumber || "your Twilio number"}</b>.
         </p>
-        <p className="muted">{data.note}</p>
+      </div>
+
+      <div className="card">
+        <p className="muted" style={{ margin: 0 }}>{data.note}</p>
       </div>
 
       {data.carriers.map((c) => (
         <div key={c.name} className="card">
-          <h2 style={{ marginTop: 0 }}>{c.name} <span className="tag">{c.type}</span></h2>
+          <h2 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 10 }}>
+            {c.name} <span className="tag plain">{c.type}</span>
+          </h2>
           <label>Enable</label>
           <pre className="code">{sub(c.enable)}</pre>
           <label>Disable</label>
           <pre className="code">{sub(c.disable)}</pre>
-          {c.notes && <p className="muted">{c.notes}</p>}
+          {c.notes && <p className="muted" style={{ marginBottom: 0 }}>{c.notes}</p>}
         </div>
       ))}
     </main>

@@ -21,9 +21,7 @@ export default function ContactsPage() {
         const me = await api.me();
         setUserId(me.id);
         await load(me.id);
-      } catch (e) {
-        setErr(e.message);
-      }
+      } catch (e) { setErr(e.message); }
     })();
   }, []);
 
@@ -48,25 +46,28 @@ export default function ContactsPage() {
     await load(userId);
   }
 
-  if (err) return <main className="container"><div className="card">Error: {err}</div></main>;
+  if (err) return <main className="container"><div className="banner">⚠ {err}</div></main>;
 
   return (
     <main className="container">
-      <h1>Contacts</h1>
+      <div className="page-head">
+        <h1>Contacts</h1>
+        <p className="sub">Known callers are greeted by name and follow their group's rules.</p>
+      </div>
 
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Add contact</h2>
         <form onSubmit={addContact}>
           <div className="row">
-            <div style={{ flex: 1, minWidth: 180 }}>
+            <div className="field">
               <label>Name</label>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
-            <div style={{ flex: 1, minWidth: 180 }}>
+            <div className="field">
               <label>Phone (E.164)</label>
-              <input value={form.phone} placeholder="+1415..." onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <input value={form.phone} placeholder="+1415…" onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
-            <div style={{ flex: 1, minWidth: 180 }}>
+            <div className="field">
               <label>Group</label>
               <select value={form.groupId} onChange={(e) => setForm({ ...form, groupId: e.target.value })}>
                 <option value="">— none —</option>
@@ -76,18 +77,17 @@ export default function ContactsPage() {
           </div>
           <label>Notes (per-caller agent instructions)</label>
           <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-          <div style={{ marginTop: 12 }}><button type="submit">Add contact</button></div>
+          <div style={{ marginTop: 14 }}><button type="submit">Add contact</button></div>
         </form>
       </div>
 
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Groups</h2>
         <p className="muted" style={{ marginTop: 0 }}>
-          Customize how the agent greets and behaves for everyone in a group (e.g. Family, VIP, Vendors).
-          Assign contacts to a group above.
+          Customize the greeting and behavior for everyone in a group (Family, VIP, Vendors…).
         </p>
         <form onSubmit={addGroup} className="row" style={{ alignItems: "flex-end" }}>
-          <div style={{ flex: 1 }}>
+          <div className="field">
             <label>New group name</label>
             <input value={groupName} onChange={(e) => setGroupName(e.target.value)} />
           </div>
@@ -95,28 +95,31 @@ export default function ContactsPage() {
         </form>
       </div>
 
-      {groups.map((g) => (
-        <GroupEditor key={g.id} group={g} onChanged={() => load(userId)} />
-      ))}
-      {groups.length === 0 && <p className="muted">No groups yet. Add one above.</p>}
+      {groups.map((g) => <GroupEditor key={g.id} group={g} onChanged={() => load(userId)} />)}
 
-      <div className="card" style={{ padding: 0 }}>
-        <table>
-          <thead><tr><th>Name</th><th>Phone</th><th>Group</th><th>Notes</th><th></th></tr></thead>
-          <tbody>
-            {contacts.map((c) => (
-              <tr key={c.id}>
-                <td>{c.name}</td>
-                <td>{c.phone}</td>
-                <td>{c.group?.name || "—"}</td>
-                <td className="muted">{c.notes || "—"}</td>
-                <td><button className="danger" onClick={() => del(c.id)}>Delete</button></td>
-              </tr>
-            ))}
-            {contacts.length === 0 && <tr><td colSpan={5} className="muted" style={{ padding: 16 }}>No contacts.</td></tr>}
-          </tbody>
-        </table>
-      </div>
+      <h2>All contacts</h2>
+      {contacts.length === 0 ? (
+        <div className="card"><div className="empty"><div className="ico">👥</div>No contacts yet.</div></div>
+      ) : (
+        <div className="card tight">
+          <div className="table-wrap">
+            <table className="responsive">
+              <thead><tr><th>Name</th><th>Phone</th><th>Group</th><th>Notes</th><th></th></tr></thead>
+              <tbody>
+                {contacts.map((c) => (
+                  <tr key={c.id}>
+                    <td data-label="Name"><b>{c.name}</b></td>
+                    <td data-label="Phone" className="muted">{c.phone}</td>
+                    <td data-label="Group">{c.group ? <span className="tag plain">{c.group.name}</span> : <span className="faint">—</span>}</td>
+                    <td data-label="Notes" className="muted">{c.notes || "—"}</td>
+                    <td data-label=""><button className="danger" onClick={() => del(c.id)}>Delete</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -125,19 +128,14 @@ function GroupEditor({ group, onChanged }) {
   const [g, setG] = useState(group);
   const [saved, setSaved] = useState(false);
 
-  function set(field, value) {
-    setG((p) => ({ ...p, [field]: value }));
-    setSaved(false);
-  }
+  function set(field, value) { setG((p) => ({ ...p, [field]: value })); setSaved(false); }
 
   async function save() {
     await api.updateGroup(g.id, {
       name: g.name,
       greeting: g.greeting,
       systemPromptAddon: g.systemPromptAddon,
-      allowedTopics: typeof g.allowedTopics === "string"
-        ? g.allowedTopics.split(",")
-        : g.allowedTopics,
+      allowedTopics: typeof g.allowedTopics === "string" ? g.allowedTopics.split(",") : g.allowedTopics,
     });
     setSaved(true);
     onChanged?.();
@@ -153,36 +151,21 @@ function GroupEditor({ group, onChanged }) {
 
   return (
     <div className="card">
-      <div className="row" style={{ alignItems: "center", justifyContent: "space-between" }}>
-        <input
-          value={g.name}
-          onChange={(e) => set("name", e.target.value)}
-          style={{ maxWidth: 240, fontWeight: 600 }}
-        />
+      <div className="between">
+        <input value={g.name} onChange={(e) => set("name", e.target.value)} style={{ maxWidth: 260, fontWeight: 600 }} />
         <button className="danger" onClick={remove}>Delete</button>
       </div>
-
-      <label>Custom greeting (what the agent says first to this group)</label>
+      <label>Custom greeting (first thing the agent says to this group)</label>
       <textarea rows={2} value={g.greeting || ""} onChange={(e) => set("greeting", e.target.value)} />
-
-      <label>Behavior instructions (appended to the agent's prompt for this group)</label>
-      <textarea
-        rows={2}
-        value={g.systemPromptAddon || ""}
-        onChange={(e) => set("systemPromptAddon", e.target.value)}
-        placeholder="e.g. Be warm and casual. You may share that Alex is doing well and will call back soon."
-      />
-
-      <label>Topics the agent may answer for this group (comma-separated)</label>
-      <input
-        value={topicsStr}
-        onChange={(e) => set("allowedTopics", e.target.value)}
-        placeholder="e.g. when Alex will be free, whether Alex is okay"
-      />
-
-      <div className="row" style={{ alignItems: "center", marginTop: 12 }}>
-        <button onClick={save}>Save group</button>
-        {saved && <span style={{ color: "var(--green)" }}>Saved ✓</span>}
+      <label>Behavior instructions (appended to the agent's prompt)</label>
+      <textarea rows={2} value={g.systemPromptAddon || ""} onChange={(e) => set("systemPromptAddon", e.target.value)}
+        placeholder="e.g. Be warm and casual. You may share that Alex is doing well." />
+      <label>Topics the agent may answer (comma-separated)</label>
+      <input value={topicsStr} onChange={(e) => set("allowedTopics", e.target.value)}
+        placeholder="e.g. when Alex will be free, whether Alex is okay" />
+      <div className="row" style={{ alignItems: "center", marginTop: 14 }}>
+        <button className="sm" onClick={save}>Save group</button>
+        {saved && <span className="saved">✓ Saved</span>}
       </div>
     </div>
   );

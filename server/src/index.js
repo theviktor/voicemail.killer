@@ -6,6 +6,8 @@ import { voiceWebhook } from "./twilio/voiceWebhook.js";
 import { recordingStatusHandler } from "./twilio/recording.js";
 import { attachMediaBridge } from "./twilio/mediaBridge.js";
 import api from "./api/routes.js";
+import authRoutes from "./api/authRoutes.js";
+import adminRoutes from "./api/adminRoutes.js";
 
 const app = express();
 app.use(cors());
@@ -20,7 +22,9 @@ app.post("/twilio/voice", voiceWebhook);
 app.post("/twilio/recording-status", recordingStatusHandler);
 
 // REST API for the dashboard.
-app.use("/api", api);
+app.use("/api/auth", authRoutes); // login (open) + me (auth)
+app.use("/api/admin", adminRoutes); // admin-only user management
+app.use("/api", api); // resource routes (auth + ownership enforced inside)
 
 const server = http.createServer(app);
 

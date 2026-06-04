@@ -99,6 +99,9 @@ a:hover { color: #9db2ff; }
   background: linear-gradient(135deg, rgba(108,140,255,.22), rgba(139,108,255,.22));
   box-shadow: inset 0 0 0 1px rgba(108,140,255,.4);
 }
+.navuser { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.navuser-name { color: var(--muted); font-size: 13.5px; font-weight: 550; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 720px) { .navuser-name { display: none; } .navlinks { margin-left: 0; } }
 
 /* ---------- Layout ---------- */
 .container { max-width: 1040px; margin: 0 auto; padding: 28px 20px 64px; }
@@ -240,7 +243,19 @@ pre.code {
 }
 
 .saved { color: var(--green); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
-.spin { color: var(--muted); padding: 40px 0; text-align: center; }
+.spin { color: var(--muted); padding: 64px 0; text-align: center; }
+
+/* ---------- Auth / login ---------- */
+.auth { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+.auth-card {
+  width: 100%; max-width: 380px;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--bg-2) 140%);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 28px; box-shadow: var(--shadow-lg);
+}
+.auth-brand { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; margin-bottom: 8px; }
+.auth-brand .logo { width: 44px; height: 44px; border-radius: 12px; margin-bottom: 4px; }
+.auth-brand .logo svg { width: 24px; height: 24px; }
 
 /* ---------- Mobile ---------- */
 @media (max-width: 720px) {

@@ -44,6 +44,19 @@ export const env = {
     fromEmail: process.env.ALERT_FROM_EMAIL,
     fromName: process.env.ALERT_FROM_NAME || "AI Receptionist",
   },
+
+  auth: {
+    jwtSecret: process.env.JWT_SECRET || "dev-insecure-change-me",
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  },
+
+  // Seeded admin + demo-user login (create-only; changing later won't reset).
+  admin: {
+    email: process.env.ADMIN_EMAIL || "admin@example.com",
+    password: process.env.ADMIN_PASSWORD || "ChangeMe-admin-123",
+    name: process.env.ADMIN_NAME || "Administrator",
+  },
+  demoLoginPassword: process.env.DEMO_PASSWORD || "ChangeMe-demo-123",
 };
 
 /** Derive the wss://.../twilio/media URL Twilio should stream to. */

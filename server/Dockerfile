@@ -20,4 +20,4 @@ EXPOSE 8080
 
 # Apply schema (idempotent), seed the demo user once (create-only, non-fatal),
 # then boot. For real migrations swap `prisma db push` for `prisma migrate deploy`.
-CMD ["sh", "-c", "npx prisma db push --skip-generate && (node prisma/seed.js || echo 'seed skipped') && node src/index.js"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss && (node prisma/seed.js || echo 'seed skipped') && node src/index.js"]

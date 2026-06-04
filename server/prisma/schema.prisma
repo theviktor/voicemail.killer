@@ -7,11 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 /// The callee ("Mr. X"). One row per person whose calls the agent answers.
 model User {
   id           String   @id @default(cuid())
   name         String
   companyName  String?
+
+  /// Login credentials. Nullable so pre-auth rows remain valid; set by seed/admin.
+  email        String?  @unique
+  passwordHash String?
+  role         Role     @default(USER)
   /// The Twilio number assigned exclusively to this user; callers reach it via
   /// conditional call forwarding. Used to resolve tenant on inbound calls.
   twilioNumber String   @unique

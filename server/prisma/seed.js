@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -15,6 +16,13 @@ const NAME = process.env.DEMO_USER_NAME || "Alex Rivera";
 const COMPANY = process.env.DEMO_COMPANY || "Rivera Consulting";
 const ALERT_EMAIL = process.env.DEMO_ALERT_EMAIL || "alex@example.com";
 const ALERT_PHONE = process.env.DEMO_ALERT_PHONE || "+15555550199";
+
+// Auth bootstrap.
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@example.com").toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChangeMe-admin-123";
+const ADMIN_NAME = process.env.ADMIN_NAME || "Administrator";
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || "ChangeMe-demo-123";
+const DEMO_LOGIN_EMAIL = ALERT_EMAIL.toLowerCase();
 
 async function main() {
   const user = await prisma.user.upsert({
@@ -62,6 +70,38 @@ async function main() {
       notes: "Alex's sibling.",
     },
   });
+
+  // Give the demo user a login if it doesn't have one yet (create-only safe).
+  if (!user.email || !user.passwordHash) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email: DEMO_LOGIN_EMAIL,
+        passwordHash: await bcrypt.hash(DEMO_PASSWORD, 10),
+        role: "USER",
+      },
+    });
+    console.log(`Demo user login set: ${DEMO_LOGIN_EMAIL} / ${DEMO_PASSWORD}`);
+  }
+
+  // Bootstrap the admin account (create-only; won't reset an existing password).
+  const existingAdmin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL } });
+  if (!existingAdmin) {
+    await prisma.user.create({
+      data: {
+        name: ADMIN_NAME,
+        email: ADMIN_EMAIL,
+        passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 10),
+        role: "ADMIN",
+        // Admin needs a unique twilioNumber placeholder (not call-routable).
+        twilioNumber: "admin-unassigned",
+        availability: "not taking calls",
+      },
+    });
+    console.log(`Admin created: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+  } else {
+    console.log(`Admin exists: ${ADMIN_EMAIL}`);
+  }
 
   console.log("Seeded user:", user.id, user.name, user.twilioNumber);
 }

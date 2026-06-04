@@ -1,5 +1,6 @@
 import "./globals.css";
 import Nav from "./Nav";
+import { AuthProvider } from "../lib/auth";
 
 export const metadata = {
   title: "AI Receptionist",
@@ -16,8 +17,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Nav />
-        {children}
+        <AuthProvider>
+          <Nav />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

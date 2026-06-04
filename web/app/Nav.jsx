@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "../lib/auth";
 
 const LINKS = [
   { href: "/", label: "Calls" },
@@ -12,7 +13,11 @@ const LINKS = [
 
 export default function Nav() {
   const path = usePathname();
+  const { user, logout } = useAuth();
   const isActive = (href) => (href === "/" ? path === "/" : path.startsWith(href));
+
+  // Hidden on the login screen / before auth resolves.
+  if (!user || path === "/login") return null;
 
   return (
     <header className="appbar">
@@ -31,7 +36,14 @@ export default function Nav() {
               {l.label}
             </Link>
           ))}
+          {user.role === "ADMIN" && (
+            <Link href="/admin" className={isActive("/admin") ? "active" : ""}>Admin</Link>
+          )}
         </nav>
+        <div className="navuser">
+          <span className="navuser-name" title={user.email}>{user.name}</span>
+          <button className="secondary sm" onClick={logout}>Log out</button>
+        </div>
       </div>
     </header>
   );

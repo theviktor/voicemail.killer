@@ -1,91 +1,131 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api } from "../lib/api";
+import { useAuth } from "../lib/auth";
+import { Icon } from "./Icon";
+import { initials, relTime, fullTime, dur } from "../lib/format";
+
+const TAGS = { KNOWN: ["known", "Known"], UNKNOWN: ["unknown", "Unknown"], TELEMARKETER: ["telemarketer", "Spam"] };
 
 export default function CallsPage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
+  const router = useRouter();
   const [calls, setCalls] = useState([]);
-  const [err, setErr] = useState(null);
+  const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const me = await api.me();
-        setUser(me);
-        if (me) setCalls(await api.calls(me.id));
-      } catch (e) {
-        setErr(e.message);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    if (!user) return;
+    api.calls(user.id).then(setCalls).catch((e) => setErr(e.message)).finally(() => setLoading(false));
+  }, [user]);
 
   const withMsg = calls.filter((c) => c.messageSummary).length;
   const telem = calls.filter((c) => c.classification === "TELEMARKETER").length;
+  const recs = calls.filter((c) => c.recordingUrl).length;
+  const needs = calls.filter((c) => c.urgency === "HIGH").length;
 
-  function relTime(d) {
-    const s = (Date.now() - new Date(d).getTime()) / 1000;
-    if (s < 60) return "just now";
-    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-    return new Date(d).toLocaleDateString([], { month: "short", day: "numeric" });
-  }
+  const shown = calls.filter((c) =>
+    filter === "all" ? true : filter === "messages" ? !!c.messageSummary : c.urgency === "HIGH");
+
+  const FILTERS = [
+    { value: "all", label: "All" },
+    { value: "messages", label: "Messages" },
+    { value: "attention", label: "Needs callback" },
+  ];
 
   return (
-    <main className="container">
+    <main className="page">
       <div className="page-head">
-        <h1>Calls</h1>
-        <p className="sub">
-          {user ? (
-            <>Answering for <b>{user.name}</b> · {user.twilioNumber}</>
-          ) : (
-            "Recent calls your assistant has handled"
-          )}
-        </p>
+        <div>
+          <h1>Calls</h1>
+          <p className="sub">Answering for <b>{user?.name}</b> · <span className="mono">{user?.twilioNumber}</span></p>
+        </div>
+        <button className="btn secondary" onClick={() => router.push("/carriers")}><Icon n="forward" />Forwarding setup</button>
       </div>
 
-      {err && <div className="banner">⚠ {err}. Is the server reachable?</div>}
+      {err && <div className="banner err"><Icon n="alert" /><div>{err}. Is the server reachable?</div></div>}
 
       <div className="stats">
-        <div className="stat"><div className="n">{calls.length}</div><div className="l">Total calls</div></div>
-        <div className="stat"><div className="n">{withMsg}</div><div className="l">Messages taken</div></div>
-        <div className="stat"><div className="n">{telem}</div><div className="l">Telemarketers</div></div>
+        <Stat icon="phoneIn" label="Calls answered" value={calls.length} />
+        <Stat icon="message" label="Messages taken" value={withMsg} />
+        <Stat icon="shield" label="Spam screened" value={telem} />
+        <Stat icon="voicemail" label="Recordings" value={recs} />
       </div>
 
-      {loading ? (
-        <div className="spin">Loading calls…</div>
-      ) : calls.length === 0 ? (
-        <div className="card"><div className="empty"><div className="ico">📭</div>No calls yet.<br />Forward a call to your Twilio number to see it here.</div></div>
-      ) : (
-        <div className="card tight">
+      {needs > 0 && (
+        <div className="banner err" style={{ marginTop: 18 }}>
+          <Icon n="alert" />
+          <div><b>{needs} call{needs > 1 ? "s need" : " needs"} a callback.</b> Flagged urgent — review below.</div>
+        </div>
+      )}
+
+      <div className="card tight" style={{ marginTop: 20 }}>
+        <div className="card-h">
+          <div><h3>Recent calls</h3><div className="desc">Everything Vera handled, newest first</div></div>
+          <div className="seg">
+            {FILTERS.map((f) => (
+              <button key={f.value} className={filter === f.value ? "on" : ""} onClick={() => setFilter(f.value)}>{f.label}</button>
+            ))}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="spin">Loading calls…</div>
+        ) : shown.length === 0 ? (
+          <div className="empty"><div className="ic"><Icon n="phone" /></div><h3>No calls yet</h3><p>Forward a call to your number to see it here.</p></div>
+        ) : (
           <div className="table-wrap">
-            <table className="responsive">
-              <thead>
-                <tr><th>When</th><th>Caller</th><th>Type</th><th>Summary</th><th>Rec</th></tr>
-              </thead>
+            <table className="row-link responsive">
+              <thead><tr><th>Caller</th><th>Type</th><th>Summary</th><th>When</th><th style={{ textAlign: "right" }}>Length</th></tr></thead>
               <tbody>
-                {calls.map((c) => (
-                  <tr key={c.id}>
-                    <td data-label="When" className="muted">{relTime(c.startedAt)}</td>
-                    <td data-label="Caller">
-                      <Link href={`/calls/${c.id}`}>{c.callerName || c.callerNumber || "Unknown"}</Link>
-                    </td>
-                    <td data-label="Type">
-                      <span className={`tag ${c.classification}`}>{c.classification.toLowerCase()}</span>
-                      {c.urgency === "HIGH" && <span className="tag HIGH" style={{ marginLeft: 6 }}>urgent</span>}
-                    </td>
-                    <td data-label="Summary" className="muted">{c.messageSummary || "—"}</td>
-                    <td data-label="Rec">{c.recordingUrl ? "🎧" : "—"}</td>
-                  </tr>
-                ))}
+                {shown.map((c) => {
+                  const [k, lbl] = TAGS[c.classification] || TAGS.UNKNOWN;
+                  return (
+                    <tr key={c.id} onClick={() => router.push(`/calls/${c.id}`)}>
+                      <td data-label="Caller">
+                        <div className="caller">
+                          <div className={"ava" + (c.classification === "KNOWN" ? " known" : "")}>
+                            {c.classification === "TELEMARKETER" ? <Icon n="shield" /> : initials(c.callerName || "?")}
+                          </div>
+                          <div>
+                            <div className="who">{c.callerName || "Unknown caller"}</div>
+                            <div className="sub2 mono">{c.callerNumber}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td data-label="Type">
+                        <div className="row" style={{ gap: 6 }}>
+                          <span className={`tag ${k}`}><span className="d" />{lbl}</span>
+                          {c.urgency === "HIGH" && <span className="tag high"><span className="d" />Urgent</span>}
+                        </div>
+                      </td>
+                      <td data-label="Summary" className="muted" style={{ maxWidth: 320 }}>{c.messageSummary || <span className="faint">No message</span>}</td>
+                      <td data-label="When" className="muted" title={fullTime(c.startedAt)}>{relTime(c.startedAt)}</td>
+                      <td data-label="Length" className="muted mono" style={{ textAlign: "right" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
+                          {c.recordingUrl && <Icon n="voicemail" style={{ width: 15, opacity: .6 }} />}
+                          {dur(c.recordingDurationSec)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </main>
+  );
+}
+
+function Stat({ icon, label, value }) {
+  return (
+    <div className="stat">
+      <div className="top"><span className="ic"><Icon n={icon} /></span>{label}</div>
+      <div className="n">{value}</div>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { api } from "../../lib/api";
+import { Icon, BrandMark } from "../Icon";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,42 +11,29 @@ export default function LoginPage() {
 
   async function submit(e) {
     e.preventDefault();
-    setErr(null);
-    setBusy(true);
+    setErr(null); setBusy(true);
     try {
       await api.login(email.trim(), password);
-      window.location.href = "/"; // full reload so auth state re-initializes
-    } catch (e) {
-      setErr(e.message);
-      setBusy(false);
-    }
+      window.location.href = "/";
+    } catch (e) { setErr(e.message); setBusy(false); }
   }
 
   return (
     <main className="auth">
-      <form className="auth-card" onSubmit={submit}>
+      <form className="card auth-card" onSubmit={submit}>
         <div className="auth-brand">
-          <span className="logo" aria-hidden>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
-            </svg>
-          </span>
-          <h1 style={{ fontSize: 20, margin: 0 }}>AI Receptionist</h1>
-          <p className="muted" style={{ margin: 0, fontSize: 14 }}>Sign in to your dashboard</p>
+          <div className="brand-mark"><BrandMark /></div>
+          <h1 style={{ fontSize: 21, letterSpacing: "-0.03em" }}>Welcome back</h1>
+          <p className="muted" style={{ fontSize: "13.5px", marginTop: 5 }}>Sign in to your Vera dashboard</p>
         </div>
 
-        {err && <div className="banner" style={{ marginTop: 16 }}>⚠ {err}</div>}
+        {err && <div className="banner err" style={{ marginBottom: 16 }}><Icon n="alert" /><div>{err}</div></div>}
 
-        <label>Email</label>
-        <input type="email" value={email} autoComplete="username"
-          onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
-        <label>Password</label>
-        <input type="password" value={password} autoComplete="current-password"
-          onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
-
-        <button type="submit" disabled={busy} style={{ width: "100%", marginTop: 18 }}>
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
+        <div className="vstack" style={{ gap: 14 }}>
+          <label className="field grow"><span className="lbl">Email</span><input type="email" autoComplete="username" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
+          <label className="field grow"><span className="lbl">Password</span><input type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
+          <button className="btn block" type="submit" disabled={busy} style={{ marginTop: 6, padding: "11px 15px" }}>{busy ? "Signing in…" : "Sign in"}</button>
+        </div>
       </form>
     </main>
   );
